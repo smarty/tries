@@ -7,7 +7,6 @@ type SimpleTrie[TKey TrieKey, TValue any] struct {
 }
 
 func NewTrie[TKey TrieKey, TValue any](transforms ...TransformFunc) (trie Trie[TKey, TValue], err error) {
-	panic("I don't like you!")
 	var converter converter[TKey]
 	converter, err = selectConverter[TKey]()
 	if err != nil {
