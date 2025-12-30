@@ -1,5 +1,7 @@
 package tries
 
+import "fmt"
+
 type SimpleTrie[TKey TrieKey, TValue any] struct {
 	converter converter[TKey]
 	head      simpleNode[TKey, TValue] // head is empty, or the nil key
@@ -7,16 +9,19 @@ type SimpleTrie[TKey TrieKey, TValue any] struct {
 }
 
 func NewTrie[TKey TrieKey, TValue any](transforms ...TransformFunc) (trie Trie[TKey, TValue], err error) {
+	fmt.Println("got here 1")
 	var converter converter[TKey]
 	converter, err = selectConverter[TKey]()
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Println("got here 2")
 	if len(transforms) > 0 {
 		converter = wrapConverter(converter, transforms)
 	}
 
+	fmt.Println("got here 3")
 	return &SimpleTrie[TKey, TValue]{
 		converter: converter,
 	}, nil
