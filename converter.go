@@ -218,13 +218,8 @@ func (this *converterInt64[T]) Next() (value uint8, ok bool) {
 // ----- string -----
 func (this *converterString[T]) Load(value T) error {
 	this.position = 0
-	switch v := any(value).(type) {
-	case string:
-		this.value = v
-		return nil
-	default:
-		return fmt.Errorf("%w: unable to convert %T to a string", ErrorBadTrieKey, value)
-	}
+	this.value = (any(value)).(string)
+	return nil
 }
 
 func (this *converterString[T]) Next() (value uint8, ok bool) {

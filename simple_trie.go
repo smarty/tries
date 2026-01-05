@@ -6,7 +6,7 @@ type SimpleTrie[TKey TrieKey, TValue any] struct {
 	length    int
 }
 
-func NewTrie[TKey TrieKey, TValue any](transforms ...TransformFunc) (trie Trie[TKey, TValue], err error) {
+func NewSimpleTrie[TKey TrieKey, TValue any](transforms ...TransformFunc) (trie Trie[TKey, TValue], err error) {
 	var converter converter[TKey]
 	converter, err = selectConverter[TKey]()
 	if err != nil {
@@ -22,8 +22,8 @@ func NewTrie[TKey TrieKey, TValue any](transforms ...TransformFunc) (trie Trie[T
 	}, nil
 }
 
-func NewTrieFromMap[TKey TrieIntegerString, TValue any](mapped map[TKey]TValue, transforms ...TransformFunc) (trie Trie[TKey, TValue], err error) {
-	trie, err = NewTrie[TKey, TValue](transforms...)
+func NewSimpleTrieFromMap[TKey TrieIntegerString, TValue any](mapped map[TKey]TValue, transforms ...TransformFunc) (trie Trie[TKey, TValue], err error) {
+	trie, err = NewSimpleTrie[TKey, TValue](transforms...)
 	if err != nil {
 		return nil, err
 	}

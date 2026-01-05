@@ -11,8 +11,8 @@ import (
 	"github.com/smarty/benchy/providers"
 )
 
-func Test_SimpleTrie_Find_UInt8(t *testing.T) {
-	trie, _ := NewSimpleTrie[uint8, int]()
+func Test_FlatTrie_Find_UInt8(t *testing.T) {
+	trie, _ := NewFlatTrie[uint8, int]()
 	trie.Add(23, 1)
 	trie.Add(100, 2)
 	trie.Add(0, 3)
@@ -40,8 +40,8 @@ func Test_SimpleTrie_Find_UInt8(t *testing.T) {
 	}
 }
 
-func Test_SimpleTrie_Find_Int8(t *testing.T) {
-	trie, _ := NewSimpleTrie[int8, int]()
+func Test_FlatTrie_Find_Int8(t *testing.T) {
+	trie, _ := NewFlatTrie[int8, int]()
 	trie.Add(23, 1)
 	trie.Add(100, 2)
 	trie.Add(0, 3)
@@ -69,8 +69,8 @@ func Test_SimpleTrie_Find_Int8(t *testing.T) {
 	}
 }
 
-func Test_SimpleTrie_Find_Int64(t *testing.T) {
-	trie, _ := NewSimpleTrie[int64, int]()
+func Test_FlatTrie_Find_Int64(t *testing.T) {
+	trie, _ := NewFlatTrie[int64, int]()
 	trie.Add(0x01FF_ABAB_ABAB_ABAB, 1)
 	trie.Add(0x01FF_ABAB_ABAB_ABBB, 2)
 	trie.Add(100, 3)
@@ -100,8 +100,8 @@ func Test_SimpleTrie_Find_Int64(t *testing.T) {
 	}
 }
 
-func Test_SimpleTrie_Find_String(t *testing.T) {
-	trie, _ := NewSimpleTrie[string, int]()
+func Test_FlatTrie_Find_String(t *testing.T) {
+	trie, _ := NewFlatTrie[string, int]()
 	trie.Add("Hello", 1)
 	trie.Add("World", 2)
 	trie.Add("Helicopter", 3)
@@ -139,8 +139,8 @@ func Test_SimpleTrie_Find_String(t *testing.T) {
 	}
 }
 
-func Test_SimpleTrie_Find_Int8Slice(t *testing.T) {
-	trie, _ := NewSimpleTrie[[]byte, int]()
+func Test_FlatTrie_Find_Int8Slice(t *testing.T) {
+	trie, _ := NewFlatTrie[[]byte, int]()
 	trie.Add([]byte("Hello"), 1)
 	trie.Add([]byte("World"), 2)
 	trie.Add([]byte("Helicopter"), 3)
@@ -178,8 +178,8 @@ func Test_SimpleTrie_Find_Int8Slice(t *testing.T) {
 	}
 }
 
-func Test_SimpleTrie_Find_Int64Slice(t *testing.T) {
-	trie, _ := NewSimpleTrie[[]int64, int]()
+func Test_FlatTrie_Find_Int64Slice(t *testing.T) {
+	trie, _ := NewFlatTrie[[]int64, int]()
 	trie.Add([]int64{1, 2, 3, 4}, 1)
 	trie.Add([]int64{1, 2, 3, 5}, 2)
 	trie.Add([]int64{}, 3)
@@ -208,8 +208,8 @@ func Test_SimpleTrie_Find_Int64Slice(t *testing.T) {
 	}
 }
 
-func Test_SimpleTrie_Find_WithTransform(t *testing.T) {
-	trie, _ := NewSimpleTrie[string, int](func(in byte) (out byte, use bool) {
+func Test_FlatTrie_Find_WithTransform(t *testing.T) {
+	trie, _ := NewFlatTrie[string, int](func(in byte) (out byte, use bool) {
 		if in == '-' || in == '_' {
 			return 0, false
 		}
@@ -271,7 +271,7 @@ func Test_SimpleTrie_Find_WithTransform(t *testing.T) {
 	}
 }
 
-func Benchmark_SimpleTrie(b *testing.B) {
+func Benchmark_FlatTrie(b *testing.B) {
 	statesMap := map[string]int{
 		"Alabama":                  0,
 		"AL":                       0,
@@ -389,7 +389,7 @@ func Benchmark_SimpleTrie(b *testing.B) {
 		"WY":                       56,
 	}
 
-	trie, _ := NewSimpleTrieFromMap(statesMap)
+	trie, _ := NewFlatTrieFromMap(statesMap)
 	lookupMap := make(map[string]int, 0)
 	for name, value := range statesMap {
 		lookupMap[strings.ToLower(name)] = value
@@ -406,16 +406,16 @@ func Benchmark_SimpleTrie(b *testing.B) {
 		RegisterBenchmark("map", provider.WrapBenchmarkFunc(func(a, b string) {
 			_ = lookupMap[a] == statesMap[b]
 		})).
-		RegisterBenchmark("simple_trie", provider.WrapBenchmarkFunc(func(a, b string) {
+		RegisterBenchmark("flat_trie", provider.WrapBenchmarkFunc(func(a, b string) {
 			v1, _ := trie.Find(a)
 			v2, _ := trie.Find(b)
 			_ = v1 == v2
-		}) /*, options.PProfCPU*/).
+		})).
 		ShowMemoryStats().
 		Run()
 }
 
-func Benchmark_SimpleTrie_WithTransform(b *testing.B) {
+func Benchmark_FlatTrie_WithTransform(b *testing.B) {
 	mapped := map[string]int{
 		"hello":      1,
 		"world":      2,
@@ -427,7 +427,7 @@ func Benchmark_SimpleTrie_WithTransform(b *testing.B) {
 		"":           8,
 	}
 
-	trie, _ := NewSimpleTrieFromMap(
+	trie, _ := NewFlatTrieFromMap(
 		mapped,
 		func(in byte) (out byte, use bool) {
 			if in == '-' || in == '_' {
@@ -442,31 +442,7 @@ func Benchmark_SimpleTrie_WithTransform(b *testing.B) {
 		},
 	)
 
-	provider := providers.New2(func(string, bool) {}).
-		Add("Hello", true).
-		Add("hellO", true).
-		Add("-H-e-l-lo", true).
-		Add("World", true).
-		Add("worLd", true).
-		Add("_World_", true).
-		Add("Helicopter", true).
-		Add("heliCopter", true).
-		Add("He--licopte__r", true).
-		Add("Fair", true).
-		Add("fAIR", true).
-		Add("F--a__i--r", true).
-		Add("Weather", true).
-		Add("weaTHer", true).
-		Add("-----Weather", true).
-		Add("Whether", true).
-		Add("whether", true).
-		Add("Whether_______", true).
-		Add("Help", true).
-		Add("help", true).
-		Add("H_-elp", true).
-		Add("", true).
-		Add("_-_--_", true).
-		Add("not-in-data", false)
+	provider := providers.New2(func(string, bool) {}).Add("Hello", true).Add("hellO", true).Add("-H-e-l-lo", true).Add("World", true).Add("worLd", true).Add("_World_", true).Add("Helicopter", true).Add("heliCopter", true).Add("He--licopte__r", true).Add("Fair", true).Add("fAIR", true).Add("F--a__i--r", true).Add("Weather", true).Add("weaTHer", true).Add("-----Weather", true).Add("Whether", true).Add("whether", true).Add("Whether_______", true).Add("Help", true).Add("help", true).Add("H_-elp", true).Add("", true).Add("_-_--_", true).Add("not-in-data", false)
 
 	var ok bool
 	benchy.New(b, options.Medium).
