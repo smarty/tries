@@ -389,11 +389,12 @@ func Benchmark_FlatTrie(b *testing.B) {
 		"WY":                       56,
 	}
 
-	trie, _ := NewFlatTrieFromMap(statesMap)
 	lookupMap := make(map[string]int, 0)
 	for name, value := range statesMap {
 		lookupMap[strings.ToLower(name)] = value
 	}
+
+	trie, _ := NewFlatTrieFromMap(lookupMap)
 
 	provider := providers.New2(func(string, string) {})
 	for name1 := range statesMap {
@@ -404,7 +405,7 @@ func Benchmark_FlatTrie(b *testing.B) {
 
 	benchy.New(b, options.Medium).
 		RegisterBenchmark("map", provider.WrapBenchmarkFunc(func(a, b string) {
-			_ = lookupMap[a] == statesMap[b]
+			_ = lookupMap[strings.ToLower(a)] == lookupMap[strings.ToLower(b)]
 		})).
 		RegisterBenchmark("flat_trie", provider.WrapBenchmarkFunc(func(a, b string) {
 			v1, _ := trie.Find(a)
@@ -435,7 +436,7 @@ func Benchmark_FlatTrie_WithTransform(b *testing.B) {
 			}
 
 			if in >= 'A' && in <= 'Z' {
-				return in - 'A' + 'a', true
+				return in + 0x20, true
 			}
 
 			return in, true
@@ -460,6 +461,7 @@ func Benchmark_FlatTrie_WithTransform(b *testing.B) {
 				b.Fail()
 			}
 		})).
+		ShowMemoryStats().
 		Run()
 
 	ok = !ok

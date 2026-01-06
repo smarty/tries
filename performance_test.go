@@ -8,8 +8,8 @@ import (
 	"github.com/smarty/benchy/providers"
 )
 
-func Benchmark_CompareFlatTrieVsSimpleTrie(b *testing.B) {
-	trieSimple, _ := NewSimpleTrie[string, int]()
+func Benchmark_Compare_Strings(b *testing.B) {
+	trieSimple, _ := NewTrie[string, int]()
 	trieFlat, _ := NewFlatTrie[string, int]()
 	regularMap := make(map[string]int)
 	for _, word := range benchmarkWords {
@@ -24,14 +24,48 @@ func Benchmark_CompareFlatTrieVsSimpleTrie(b *testing.B) {
 	}
 
 	benchy.New(b, options.Medium).
-		RegisterBenchmark("SimpleTrie", provider.WrapBenchmarkFunc(func(word string) {
+		RegisterBenchmark("SimpleTrie Strings", provider.WrapBenchmarkFunc(func(word string) {
 			trieSimple.Find(word)
 		})).
-		RegisterBenchmark("FlatTrie", provider.WrapBenchmarkFunc(func(word string) {
+		RegisterBenchmark("FlatTrie Strings", provider.WrapBenchmarkFunc(func(word string) {
 			trieFlat.Find(word)
-		}), options.PProfCPU).
-		RegisterBenchmark("Map", provider.WrapBenchmarkFunc(func(word string) {
+		})).
+		RegisterBenchmark("Map Strings", provider.WrapBenchmarkFunc(func(word string) {
 			_ = regularMap[word]
+		})).
+		ShowMemoryStats().
+		Run()
+}
+
+func Benchmark_Compare_Integers(b *testing.B) {
+	randomNumbers := make([]int64, 100_000)
+	for i := 0; i < len(randomNumbers); i++ {
+		randomNumbers[i] = (int64(i) * 37) % int64(len(randomNumbers))
+	}
+
+	trieSimple, _ := NewTrie[int64, bool]()
+	trieFlat, _ := NewFlatTrie[int64, bool]()
+	regularMap := make(map[int64]bool)
+	for _, number := range randomNumbers {
+		trieSimple.Add(number, true)
+		trieFlat.Add(number, true)
+		regularMap[number] = true
+	}
+
+	provider := providers.New1(func(int64) {})
+	for _, number := range randomNumbers {
+		provider.Add(number)
+	}
+
+	benchy.New(b, options.Medium).
+		RegisterBenchmark("SimpleTrie Integers", provider.WrapBenchmarkFunc(func(number int64) {
+			trieSimple.Find(number)
+		})).
+		RegisterBenchmark("FlatTrie Integers", provider.WrapBenchmarkFunc(func(number int64) {
+			trieFlat.Find(number)
+		})).
+		RegisterBenchmark("Map Integers", provider.WrapBenchmarkFunc(func(number int64) {
+			_ = regularMap[number]
 		})).
 		ShowMemoryStats().
 		Run()

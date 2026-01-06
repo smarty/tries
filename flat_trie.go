@@ -1,7 +1,5 @@
 package tries
 
-import "fmt"
-
 const (
 	arenaNumber4   = 4
 	arenaNumber16  = 16
@@ -92,13 +90,11 @@ func (this *FlatTrie[TKey, TValue]) Add(key TKey, value TValue) (expanded bool) 
 			return this.setTerminalValue(cur, value)
 		}
 
-		// Descend if child exists.
 		if child, found := this.findChild(cur, k); found {
 			cur = child
 			continue
 		}
 
-		// Otherwise create a child and descend into it.
 		cur = this.addChild(cur, k)
 	}
 }
@@ -306,16 +302,12 @@ func (this *FlatTrie[TKey, TValue]) copyChunk(oldSize int, oldStart int, newSize
 func (this *FlatTrie[TKey, TValue]) doubleArenaSize(arena int) {
 	switch arena {
 	case arenaNumber4:
-		fmt.Println("expanding arena 4")
 		this.arena4, this.useTable4 = expandArena(this.arena4, this.useTable4)
 	case arenaNumber16:
-		fmt.Println("expanding arena 16")
 		this.arena16, this.useTable16 = expandArena(this.arena16, this.useTable16)
 	case arenaNumber64:
-		fmt.Println("expanding arena 64")
 		this.arena64, this.useTable64 = expandArena(this.arena64, this.useTable64)
 	case arenaNumber256:
-		fmt.Println("expanding arena 256")
 		this.arena256, this.useTable256 = expandArena(this.arena256, this.useTable256)
 	}
 }

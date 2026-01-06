@@ -12,7 +12,7 @@ import (
 )
 
 func Test_SimpleTrie_Find_UInt8(t *testing.T) {
-	trie, _ := NewSimpleTrie[uint8, int]()
+	trie, _ := NewTrie[uint8, int]()
 	trie.Add(23, 1)
 	trie.Add(100, 2)
 	trie.Add(0, 3)
@@ -41,7 +41,7 @@ func Test_SimpleTrie_Find_UInt8(t *testing.T) {
 }
 
 func Test_SimpleTrie_Find_Int8(t *testing.T) {
-	trie, _ := NewSimpleTrie[int8, int]()
+	trie, _ := NewTrie[int8, int]()
 	trie.Add(23, 1)
 	trie.Add(100, 2)
 	trie.Add(0, 3)
@@ -70,7 +70,7 @@ func Test_SimpleTrie_Find_Int8(t *testing.T) {
 }
 
 func Test_SimpleTrie_Find_Int64(t *testing.T) {
-	trie, _ := NewSimpleTrie[int64, int]()
+	trie, _ := NewTrie[int64, int]()
 	trie.Add(0x01FF_ABAB_ABAB_ABAB, 1)
 	trie.Add(0x01FF_ABAB_ABAB_ABBB, 2)
 	trie.Add(100, 3)
@@ -101,7 +101,7 @@ func Test_SimpleTrie_Find_Int64(t *testing.T) {
 }
 
 func Test_SimpleTrie_Find_String(t *testing.T) {
-	trie, _ := NewSimpleTrie[string, int]()
+	trie, _ := NewTrie[string, int]()
 	trie.Add("Hello", 1)
 	trie.Add("World", 2)
 	trie.Add("Helicopter", 3)
@@ -140,7 +140,7 @@ func Test_SimpleTrie_Find_String(t *testing.T) {
 }
 
 func Test_SimpleTrie_Find_Int8Slice(t *testing.T) {
-	trie, _ := NewSimpleTrie[[]byte, int]()
+	trie, _ := NewTrie[[]byte, int]()
 	trie.Add([]byte("Hello"), 1)
 	trie.Add([]byte("World"), 2)
 	trie.Add([]byte("Helicopter"), 3)
@@ -179,7 +179,7 @@ func Test_SimpleTrie_Find_Int8Slice(t *testing.T) {
 }
 
 func Test_SimpleTrie_Find_Int64Slice(t *testing.T) {
-	trie, _ := NewSimpleTrie[[]int64, int]()
+	trie, _ := NewTrie[[]int64, int]()
 	trie.Add([]int64{1, 2, 3, 4}, 1)
 	trie.Add([]int64{1, 2, 3, 5}, 2)
 	trie.Add([]int64{}, 3)
@@ -209,7 +209,7 @@ func Test_SimpleTrie_Find_Int64Slice(t *testing.T) {
 }
 
 func Test_SimpleTrie_Find_WithTransform(t *testing.T) {
-	trie, _ := NewSimpleTrie[string, int](func(in byte) (out byte, use bool) {
+	trie, _ := NewTrie[string, int](func(in byte) (out byte, use bool) {
 		if in == '-' || in == '_' {
 			return 0, false
 		}
@@ -389,11 +389,12 @@ func Benchmark_SimpleTrie(b *testing.B) {
 		"WY":                       56,
 	}
 
-	trie, _ := NewSimpleTrieFromMap(statesMap)
 	lookupMap := make(map[string]int, 0)
 	for name, value := range statesMap {
 		lookupMap[strings.ToLower(name)] = value
 	}
+
+	trie, _ := NewTrieFromMap(statesMap)
 
 	provider := providers.New2(func(string, string) {})
 	for name1 := range statesMap {
@@ -404,13 +405,13 @@ func Benchmark_SimpleTrie(b *testing.B) {
 
 	benchy.New(b, options.Medium).
 		RegisterBenchmark("map", provider.WrapBenchmarkFunc(func(a, b string) {
-			_ = lookupMap[a] == statesMap[b]
+			_ = lookupMap[strings.ToLower(a)] == lookupMap[strings.ToLower(b)]
 		})).
 		RegisterBenchmark("simple_trie", provider.WrapBenchmarkFunc(func(a, b string) {
 			v1, _ := trie.Find(a)
 			v2, _ := trie.Find(b)
 			_ = v1 == v2
-		}) /*, options.PProfCPU*/).
+		})).
 		ShowMemoryStats().
 		Run()
 }
@@ -427,7 +428,7 @@ func Benchmark_SimpleTrie_WithTransform(b *testing.B) {
 		"":           8,
 	}
 
-	trie, _ := NewSimpleTrieFromMap(
+	trie, _ := NewTrieFromMap(
 		mapped,
 		func(in byte) (out byte, use bool) {
 			if in == '-' || in == '_' {
@@ -435,7 +436,7 @@ func Benchmark_SimpleTrie_WithTransform(b *testing.B) {
 			}
 
 			if in >= 'A' && in <= 'Z' {
-				return in - 'A' + 'a', true
+				return in + 0x20, true
 			}
 
 			return in, true
@@ -484,6 +485,7 @@ func Benchmark_SimpleTrie_WithTransform(b *testing.B) {
 				b.Fail()
 			}
 		})).
+		ShowMemoryStats().
 		Run()
 
 	ok = !ok
