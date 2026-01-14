@@ -11,6 +11,35 @@ import (
 	"github.com/smarty/benchy/providers"
 )
 
+func Test_SimpleTrie_Find_Int(t *testing.T) {
+	trie, _ := NewTrie[int, int]()
+	trie.Add(23, 1)
+	trie.Add(100, 2)
+	trie.Add(0, 3)
+	trie.Add(64, 4)
+
+	testTable := map[string]struct {
+		Input    int
+		Expected int
+		OK       bool
+	}{
+		"23":          {Input: 23, Expected: 1, OK: true},
+		"100":         {Input: 100, Expected: 2, OK: true},
+		"0":           {Input: 0, Expected: 3, OK: true},
+		"64":          {Input: 64, Expected: 4, OK: true},
+		"not-in-data": {Input: 5, Expected: 0, OK: false},
+	}
+
+	for name, testCase := range testTable {
+		t.Run(name, func(t *testing.T) {
+			and := assertions.New(t)
+			actual, ok := trie.Find(testCase.Input)
+			and.So(actual, should.Equal, testCase.Expected)
+			and.So(ok, should.Equal, testCase.OK)
+		})
+	}
+}
+
 func Test_SimpleTrie_Find_UInt8(t *testing.T) {
 	trie, _ := NewTrie[uint8, int]()
 	trie.Add(23, 1)

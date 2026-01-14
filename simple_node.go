@@ -1,7 +1,5 @@
 package tries
 
-import "fmt"
-
 type simpleNode[TKey TrieKey, TValue any] struct {
 	hasValue bool
 	value    TValue
@@ -42,7 +40,6 @@ func (this *simpleNode[TKey, TValue]) add(key converter[TKey], value TValue) boo
 		return nextNode.add(key, value)
 	}
 
-	fmt.Println("Adding a node now!")
 	nextNode = this.insertNewNode(k)
 	return nextNode.add(key, value)
 }

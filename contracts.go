@@ -4,7 +4,7 @@ type (
 	// TrieInteger defines any integer types that can be used as a key type for
 	// a [Trie].
 	TrieInteger interface {
-		~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uint | ~uintptr | ~int8 | ~int16 | ~int32 | ~int64 | ~int
+		~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr | ~uint | ~int8 | ~int16 | ~int32 | ~int64 | ~int
 	}
 
 	// TrieString defines any string types that can be used as a key type for a
@@ -16,7 +16,7 @@ type (
 	// TrieSlice defines any slice types that can be used as a key type for a
 	// [Trie].
 	TrieSlice interface {
-		~[]uint8 | ~[]uint16 | ~[]uint32 | ~[]uint64 | ~[]uint | ~[]uintptr | ~[]int8 | ~[]int16 | ~[]int32 | ~[]int64 | ~[]int
+		~[]uint8 | ~[]uint16 | ~[]uint32 | ~[]uint64 | ~[]uintptr | ~[]uint | ~[]int8 | ~[]int16 | ~[]int32 | ~[]int64 | ~[]int
 	}
 
 	// TrieIntegerString marries the [TrieInteger] and [TrieString] together.

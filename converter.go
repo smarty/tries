@@ -3,6 +3,13 @@ package tries
 import (
 	"encoding/binary"
 	"fmt"
+	"strconv"
+	"unsafe"
+)
+
+const (
+	nativeIntBytes = strconv.IntSize / 8
+	nativePtrBytes = int(unsafe.Sizeof(uintptr(0)))
 )
 
 type (
@@ -51,6 +58,22 @@ type (
 		value    [8]uint8
 	}
 
+	// ----- native-sized -----
+	converterUIntNative[T TrieKey] struct {
+		position uint8
+		value    [nativeIntBytes]uint8
+	}
+
+	converterIntNative[T TrieKey] struct {
+		position uint8
+		value    [nativeIntBytes]uint8
+	}
+
+	converterUIntPtrNative[T TrieKey] struct {
+		position uint8
+		value    [nativePtrBytes]uint8
+	}
+
 	converterString[T TrieKey] struct {
 		position int
 		value    string
@@ -61,7 +84,10 @@ type (
 		value    []TItem
 	}
 
-	converterIntSlice[TItem ~uint16 | ~int16 | ~uint32 | ~int32 | ~uint64 | ~int64, TKey TrieKey] struct {
+	converterIntSlice[
+		TItem ~uint16 | ~int16 | ~uint32 | ~int32 | ~uint64 | ~int64 | ~int | ~uint | ~uintptr,
+		TKey TrieKey,
+	] struct {
 		position     int
 		subConverter converter[TItem]
 		value        []TItem
@@ -215,6 +241,72 @@ func (this *converterInt64[T]) Next() (value uint8, ok bool) {
 	return value, true
 }
 
+// ----- uint (native) -----
+func (this *converterUIntNative[T]) Load(value T) error {
+	this.position = 0
+	if nativeIntBytes == 4 {
+		binary.BigEndian.PutUint32(this.value[:], uint32(any(value).(uint))) //nolint:gosec // this casting is fine
+		return nil
+	}
+	binary.BigEndian.PutUint64(this.value[:], uint64(any(value).(uint))) //nolint:gosec // this casting is fine
+	return nil
+}
+
+func (this *converterUIntNative[T]) Next() (value uint8, ok bool) {
+	const last = nativeIntBytes - 1
+	if this.position > last {
+		return 0, false
+	}
+
+	value = this.value[this.position]
+	this.position++
+	return value, true
+}
+
+// ----- int (native) -----
+func (this *converterIntNative[T]) Load(value T) error {
+	this.position = 0
+	if nativeIntBytes == 4 {
+		binary.BigEndian.PutUint32(this.value[:], uint32(any(value).(int))) //nolint:gosec // this casting is fine
+		return nil
+	}
+	binary.BigEndian.PutUint64(this.value[:], uint64(any(value).(int))) //nolint:gosec // this casting is fine
+	return nil
+}
+
+func (this *converterIntNative[T]) Next() (value uint8, ok bool) {
+	const last = nativeIntBytes - 1
+	if this.position > last {
+		return 0, false
+	}
+
+	value = this.value[this.position]
+	this.position++
+	return value, true
+}
+
+// ----- uintptr (native) -----
+func (this *converterUIntPtrNative[T]) Load(value T) error {
+	this.position = 0
+	if nativePtrBytes == 4 {
+		binary.BigEndian.PutUint32(this.value[:], uint32(any(value).(uintptr))) //nolint:gosec // this casting is fine
+		return nil
+	}
+	binary.BigEndian.PutUint64(this.value[:], uint64(any(value).(uintptr))) //nolint:gosec // this casting is fine
+	return nil
+}
+
+func (this *converterUIntPtrNative[T]) Next() (value uint8, ok bool) {
+	const last = uint8(nativePtrBytes - 1)
+	if this.position > last {
+		return 0, false
+	}
+
+	value = this.value[this.position]
+	this.position++
+	return value, true
+}
+
 // ----- string -----
 func (this *converterString[T]) Load(value T) error {
 	this.position = 0
@@ -339,8 +431,18 @@ func selectConverter[T TrieKey]() (converter converter[T], err error) {
 		return new(converterUInt64[T]), nil
 	case int64:
 		return new(converterInt64[T]), nil
+
+	// native-sized ints
+	case uint:
+		return new(converterUIntNative[T]), nil
+	case int:
+		return new(converterIntNative[T]), nil
+	case uintptr:
+		return new(converterUIntPtrNative[T]), nil
+
 	case string:
 		return new(converterString[T]), nil
+
 	case []uint8:
 		return new(converterInt8Slice[uint8, T]), nil
 	case []int8:
@@ -357,6 +459,15 @@ func selectConverter[T TrieKey]() (converter converter[T], err error) {
 		return &converterIntSlice[uint64, T]{subConverter: new(converterUInt64[uint64])}, nil
 	case []int64:
 		return &converterIntSlice[int64, T]{subConverter: new(converterInt64[int64])}, nil
+
+	// native-sized slices
+	case []uint:
+		return &converterIntSlice[uint, T]{subConverter: new(converterUIntNative[uint])}, nil
+	case []int:
+		return &converterIntSlice[int, T]{subConverter: new(converterIntNative[int])}, nil
+	case []uintptr:
+		return &converterIntSlice[uintptr, T]{subConverter: new(converterUIntPtrNative[uintptr])}, nil
+
 	default:
 		return nil, fmt.Errorf("%w: no converter is defined for type %T", ErrorBadTrieKey, dummy)
 	}
